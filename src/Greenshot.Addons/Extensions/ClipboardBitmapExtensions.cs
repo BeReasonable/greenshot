@@ -1,19 +1,19 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
-// 
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
+//
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 1 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -39,7 +39,7 @@ namespace Greenshot.Addons.Extensions
     public static class ClipboardBitmapExtensions
     {
         private static readonly LogSource Log = new LogSource();
-        private static readonly string[] SupportedBitmapFormats = 
+        private static readonly string[] SupportedBitmapFormats =
         {
             "PNG",
             "PNG+Office Art",
@@ -73,7 +73,7 @@ namespace Greenshot.Addons.Extensions
                 return true;
             }
 
-            return clipboardAccessToken.GetFilenames()
+            return clipboardAccessToken.GetFileNames()
                 .Select(filename => Path.GetExtension(filename).ToLowerInvariant())
                 .Intersect(SupportedExtensions)
                 .Any();
@@ -178,14 +178,12 @@ namespace Greenshot.Addons.Extensions
         /// <param name="outputSettings">SurfaceOutputSettings specifying how to output the surface</param>
         public static void SetAsBitmap(this IClipboardAccessToken clipboardAccessToken, ISurface surface, SurfaceOutputSettings outputSettings)
         {
-            using (var bitmapStream = new MemoryStream())
-            {
-                ImageOutput.SaveToStream(surface, bitmapStream, outputSettings);
-                bitmapStream.Seek(0, SeekOrigin.Begin);
-                // Set the stream
-                var clipboardFormat = ClipboardFormatExtensions.MapFormatToId(outputSettings.Format.ToString().ToUpperInvariant());
-                clipboardAccessToken.SetAsStream(clipboardFormat, bitmapStream);
-            }
+            using var bitmapStream = new MemoryStream();
+            ImageOutput.SaveToStream(surface, bitmapStream, outputSettings);
+            bitmapStream.Seek(0, SeekOrigin.Begin);
+            // Set the stream
+            var clipboardFormat = ClipboardFormatExtensions.MapFormatToId(outputSettings.Format.ToString().ToUpperInvariant());
+            clipboardAccessToken.SetAsStream(clipboardFormat, bitmapStream);
         }
 
         /// <summary>
@@ -196,39 +194,37 @@ namespace Greenshot.Addons.Extensions
         public static void SetAsFormat17(this IClipboardAccessToken clipboardAccessToken, ISurface surface, ICoreConfiguration coreConfiguration)
         {
             // Create the stream for the clipboard
-            using (var dibV5Stream = new MemoryStream())
+            using var dibV5Stream = new MemoryStream();
+            var outputSettings = new SurfaceOutputSettings(coreConfiguration, OutputFormats.bmp, 100, false);
+            bool dispose = ImageOutput.CreateBitmapFromSurface(surface, outputSettings, out var bitmapToSave);
+            // Create the BITMAPINFOHEADER
+            var header = BitmapInfoHeader.Create(bitmapToSave.Width, bitmapToSave.Height, 32);
+            // Make sure we have BI_BITFIELDS, this seems to be normal for Format17?
+            header.Compression = BitmapCompressionMethods.BI_BITFIELDS;
+
+            var headerBytes = BinaryStructHelper.ToByteArray(header);
+            // Write the BITMAPINFOHEADER to the stream
+            dibV5Stream.Write(headerBytes, 0, headerBytes.Length);
+
+            // As we have specified BI_COMPRESSION.BI_BITFIELDS, the BitfieldColorMask needs to be added
+            var colorMask = BitfieldColorMask.Create();
+            // Create the byte[] from the struct
+            var colorMaskBytes = BinaryStructHelper.ToByteArray(colorMask);
+            Array.Reverse(colorMaskBytes);
+            // Write to the stream
+            dibV5Stream.Write(colorMaskBytes, 0, colorMaskBytes.Length);
+
+            // Create the raw bytes for the pixels only
+            var bitmapBytes = BitmapToByteArray(bitmapToSave);
+            // Write to the stream
+            dibV5Stream.Write(bitmapBytes, 0, bitmapBytes.Length);
+            // Reset the stream to the beginning so it can be written
+            dibV5Stream.Seek(0, SeekOrigin.Begin);
+            // Set the DIBv5 to the clipboard DataObject
+            clipboardAccessToken.SetAsStream("Format17", dibV5Stream);
+            if (dispose)
             {
-                var outputSettings = new SurfaceOutputSettings(coreConfiguration, OutputFormats.bmp, 100, false);
-                bool dispose = ImageOutput.CreateBitmapFromSurface(surface, outputSettings, out var bitmapToSave);
-                // Create the BITMAPINFOHEADER
-                var header = BitmapInfoHeader.Create(bitmapToSave.Width, bitmapToSave.Height, 32);
-                // Make sure we have BI_BITFIELDS, this seems to be normal for Format17?
-                header.Compression = BitmapCompressionMethods.BI_BITFIELDS;
-
-                var headerBytes = BinaryStructHelper.ToByteArray(header);
-                // Write the BITMAPINFOHEADER to the stream
-                dibV5Stream.Write(headerBytes, 0, headerBytes.Length);
-
-                // As we have specified BI_COMPRESSION.BI_BITFIELDS, the BitfieldColorMask needs to be added
-                var colorMask = BitfieldColorMask.Create();
-                // Create the byte[] from the struct
-                var colorMaskBytes = BinaryStructHelper.ToByteArray(colorMask);
-                Array.Reverse(colorMaskBytes);
-                // Write to the stream
-                dibV5Stream.Write(colorMaskBytes, 0, colorMaskBytes.Length);
-
-                // Create the raw bytes for the pixels only
-                var bitmapBytes = BitmapToByteArray(bitmapToSave);
-                // Write to the stream
-                dibV5Stream.Write(bitmapBytes, 0, bitmapBytes.Length);
-                // Reset the stream to the beginning so it can be written
-                dibV5Stream.Seek(0, SeekOrigin.Begin);
-                // Set the DIBv5 to the clipboard DataObject
-                clipboardAccessToken.SetAsStream("Format17", dibV5Stream);
-                if (dispose)
-                {
-                    bitmapToSave.Dispose();
-                }
+                bitmapToSave.Dispose();
             }
         }
 
@@ -240,7 +236,7 @@ namespace Greenshot.Addons.Extensions
         /// <returns>byte[]</returns>
         private static byte[] BitmapToByteArray(IBitmapWithNativeSupport bitmap)
         {
-            // Lock the bitmap's bits.  
+            // Lock the bitmap's bits.
             var rect = new NativeRect(0, 0, bitmap.Width, bitmap.Height);
             var bmpData = bitmap.NativeBitmap.LockBits(rect, ImageLockMode.ReadOnly, bitmap.PixelFormat);
 
@@ -269,13 +265,11 @@ namespace Greenshot.Addons.Extensions
         /// <param name="surface">ISurface</param>
         public static void SetAsDeviceIndependendBitmap(this IClipboardAccessToken clipboardAccessToken, ISurface surface, ICoreConfiguration coreConfiguration)
         {
-            using (var bitmapStream = new MemoryStream())
-            {
-                ImageOutput.SaveToStream(surface, bitmapStream, new SurfaceOutputSettings(coreConfiguration) {Format = OutputFormats.bmp});
-                bitmapStream.Seek(Marshal.SizeOf(typeof(BitmapFileHeader)), SeekOrigin.Begin);
-                // Set the stream
-                clipboardAccessToken.SetAsStream(StandardClipboardFormats.DeviceIndependentBitmap, bitmapStream);
-            }
+            using var bitmapStream = new MemoryStream();
+            ImageOutput.SaveToStream(surface, bitmapStream, new SurfaceOutputSettings(coreConfiguration) {Format = OutputFormats.bmp});
+            bitmapStream.Seek(Marshal.SizeOf(typeof(BitmapFileHeader)), SeekOrigin.Begin);
+            // Set the stream
+            clipboardAccessToken.SetAsStream(StandardClipboardFormats.DeviceIndependentBitmap, bitmapStream);
         }
     }
 }

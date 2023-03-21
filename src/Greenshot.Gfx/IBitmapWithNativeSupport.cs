@@ -1,5 +1,5 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
 // 
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -17,44 +17,30 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#if !NETCOREAPP3_0
+using System.Drawing;
+using System.Windows.Media.Imaging;
 
-using System.ServiceModel;
-
-namespace Greenshot.Addons.Interfaces
+namespace Greenshot.Gfx
 {
     /// <summary>
-    /// This interface specifies the functional interface that Greenshot provides
+    /// This adds native bitmap support to IBitmap
     /// </summary>
-    [ServiceContract]
-    public interface IGreenshotContract
+    public interface IBitmapWithNativeSupport : IBitmap
     {
         /// <summary>
-        /// Start a capture
+        ///     Retrieves a Bitmap which only can be used as long as the underlying implementation is not disposed.
+        ///     Do not dispose this.
         /// </summary>
-        /// <param name="parameters"></param>
-        [OperationContract]
-        void Capture(string parameters);
+        Bitmap NativeBitmap { get; }
+        
+        /// <summary>
+        ///     Retrieves a BitmapSource which only can be used as long as the underlying implementation is not disposed.
+        /// </summary>
+        BitmapSource NativeBitmapSource { get; }
 
         /// <summary>
-        /// Exit the instance
+        /// Return the Size
         /// </summary>
-        [OperationContract]
-        void Exit();
-
-        /// <summary>
-        /// Reload configuration
-        /// </summary>
-        [OperationContract]
-        void ReloadConfig();
-
-        /// <summary>
-        /// Open a file
-        /// </summary>
-        /// <param name="filename"></param>
-        [OperationContract]
-        void OpenFile(string filename);
+        Size Size { get; }
     }
 }
-
-#endif

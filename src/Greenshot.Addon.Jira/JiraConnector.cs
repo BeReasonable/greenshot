@@ -1,5 +1,5 @@
 // Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2018 Thomas Braun, Jens Klingen, Robin Krom
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
 // 
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -29,8 +29,8 @@ using System.Windows.Media.Imaging;
 using Dapplo.HttpExtensions;
 using Dapplo.HttpExtensions.Extensions;
 using Dapplo.Jira;
-using Dapplo.Jira.Converters;
 using Dapplo.Jira.Entities;
+using Dapplo.Jira.SvgWinForms.Converters;
 using Dapplo.Log;
 using DynamicData;
 using Greenshot.Addon.Jira.Configuration;
@@ -91,7 +91,10 @@ namespace Greenshot.Addon.Jira
 		{
 			if (_jiraClient != null)
 			{
-				Task.Run(async () => await LogoutAsync()).Wait();
+				Task.Run(async () =>
+                {
+                    _issueTypeBitmapCache.Dispose();
+                }).Wait();
 			}
 			FavIcon?.Dispose();
 		}
@@ -142,7 +145,6 @@ namespace Greenshot.Addon.Jira
 		/// <returns>Task</returns>
 		public async Task LoginAsync(CancellationToken cancellationToken = default)
 		{
-			await LogoutAsync(cancellationToken);
 			try
 			{
 				// Get the system name, so the user knows where to login to
@@ -186,38 +188,11 @@ namespace Greenshot.Addon.Jira
 		}
 
 		/// <summary>
-		///     End the session, if there was one
-		/// </summary>
-		public Task LogoutAsync(CancellationToken cancellationToken = default)
-		{
-			if (_jiraClient != null && IsLoggedIn)
-			{
-                // TODO: Remove Jira Client?
-                //_jiraMonitor.Dispose();
-				IsLoggedIn = false;
-			}
-
-            return Task.CompletedTask;
-        }
-
-		/// <summary>
-		///     check the login credentials, to prevent timeouts of the session, or makes a login
-		///     Do not use ConfigureAwait to call this, as it will move await from the UI thread.
-		/// </summary>
-		/// <returns></returns>
-		private Task CheckCredentialsAsync(CancellationToken cancellationToken = default)
-		{
-			// TODO: Do we need to do something?
-            return Task.CompletedTask;
-        }
-
-		/// <summary>
 		///     Get the favourite filters
 		/// </summary>
 		/// <returns>List with filters</returns>
 		public async Task<IList<Filter>> GetFavoriteFiltersAsync(CancellationToken cancellationToken = default)
 		{
-			await CheckCredentialsAsync(cancellationToken);
 			return await _jiraClient.Filter.GetFavoritesAsync(cancellationToken).ConfigureAwait(false);
 		}
 
@@ -229,10 +204,9 @@ namespace Greenshot.Addon.Jira
 		/// <returns>Issue</returns>
 		public async Task<Issue> GetIssueAsync(string issueKey, CancellationToken cancellationToken = default)
 		{
-			await CheckCredentialsAsync(cancellationToken);
 			try
 			{
-				return await _jiraClient.Issue.GetAsync(issueKey, cancellationToken).ConfigureAwait(false);
+				return await _jiraClient.Issue.GetAsync(issueKey, null, null, cancellationToken).ConfigureAwait(false);
 			}
 			catch
 			{
@@ -250,15 +224,12 @@ namespace Greenshot.Addon.Jira
         /// <returns>Task</returns>
         public async Task AttachAsync(string issueKey, ISurface surface, string filename = null, CancellationToken cancellationToken = default)
 		{
-			await CheckCredentialsAsync(cancellationToken).ConfigureAwait(true);
-			using (var memoryStream = new MemoryStream())
-			{
-			    surface.WriteToStream(memoryStream, _coreConfiguration, _jiraConfiguration);
-				memoryStream.Seek(0, SeekOrigin.Begin);
-			    var contentType = surface.GenerateMimeType(_coreConfiguration, _jiraConfiguration);
-                await _jiraClient.Attachment.AttachAsync(issueKey, memoryStream, filename ?? surface.GenerateFilename(_coreConfiguration, _jiraConfiguration), contentType, cancellationToken).ConfigureAwait(false);
-			}
-		}
+            using var memoryStream = new MemoryStream();
+            surface.WriteToStream(memoryStream, _coreConfiguration, _jiraConfiguration);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            var contentType = surface.GenerateMimeType(_coreConfiguration, _jiraConfiguration);
+            await _jiraClient.Attachment.AttachAsync(issueKey, memoryStream, filename ?? surface.GenerateFilename(_coreConfiguration, _jiraConfiguration), contentType, cancellationToken).ConfigureAwait(false);
+        }
 
 		/// <summary>
 		///     Add a comment to the supplied issue
@@ -267,10 +238,9 @@ namespace Greenshot.Addon.Jira
 		/// <param name="body">text</param>
 		/// <param name="visibility">the visibility role</param>
 		/// <param name="cancellationToken">CancellationToken</param>
-		public async Task AddCommentAsync(string issueKey, string body, string visibility = null, CancellationToken cancellationToken = default)
+		public async Task AddCommentAsync(string issueKey, string body, CancellationToken cancellationToken = default)
 		{
-			await CheckCredentialsAsync(cancellationToken);
-			await _jiraClient.Issue.AddCommentAsync(issueKey, body, visibility, cancellationToken).ConfigureAwait(false);
+			await _jiraClient.Issue.AddCommentAsync(issueKey, body, cancellationToken: cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -281,7 +251,6 @@ namespace Greenshot.Addon.Jira
 		/// <returns></returns>
 		public async Task<IList<Issue>> SearchAsync(Filter filter, CancellationToken cancellationToken = default)
 		{
-			await CheckCredentialsAsync(cancellationToken);
 			var searchResult =
 				await _jiraClient.Issue.SearchAsync(filter.Jql,
                 new Page { MaxResults = 20},

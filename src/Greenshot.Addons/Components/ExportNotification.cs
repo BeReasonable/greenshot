@@ -1,5 +1,5 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
 // 
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -65,7 +65,7 @@ namespace Greenshot.Addons.Components
         {
             if (exportInformation == null || !_coreConfiguration.ShowTrayNotification)
             {
-                Log.Info().WriteLine("No notification due to ShowTrayNotification = {0} - or export made = {1}", _coreConfiguration.ShowTrayNotification);
+                Log.Info().WriteLine("No notification due to ShowTrayNotification = {0} - or exportInformation is null", _coreConfiguration.ShowTrayNotification);
                 return;
             }
 

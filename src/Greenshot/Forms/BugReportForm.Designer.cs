@@ -1,6 +1,6 @@
 ﻿/*
  * Greenshot - a free and open source screenshot tool
- * Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+ * Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
  * 
  * For more information see: http://getgreenshot.org/
  * The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -96,12 +96,12 @@ namespace Greenshot.Forms {
 			this.linkLblBugs.TabStop = true;
 			this.linkLblBugs.Text = "http://getgreenshot.org/tickets/";
 			this.linkLblBugs.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLblBugsLinkClicked);
-			// 
-			// BugReportForm
-			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13.5F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.CancelButton = this.btnClose;
+            // 
+            // BugReportForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.CancelButton = this.btnClose;
 			this.ClientSize = new System.Drawing.Size(528, 452);
 			this.Controls.Add(this.linkLblBugs);
 			this.Controls.Add(this.btnClose);

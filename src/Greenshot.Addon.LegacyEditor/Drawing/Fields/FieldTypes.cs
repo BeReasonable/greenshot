@@ -1,5 +1,5 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
 // 
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -59,7 +59,7 @@ namespace Greenshot.Addon.LegacyEditor.Drawing.Fields
         /// <summary>
         /// This field specifies the font size
         /// </summary>
-	    public static readonly IFieldType FONT_SIZE = new FieldType<int>("FONT_SIZE");
+	    public static readonly IFieldType FONT_SIZE = new FieldType<float>("FONT_SIZE");
         /// <summary>
         /// This field specifies the horizontal text alignment
         /// </summary>

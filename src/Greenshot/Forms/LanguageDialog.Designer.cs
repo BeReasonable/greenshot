@@ -1,6 +1,6 @@
 ﻿/*
  * Greenshot - a free and open source screenshot tool
- * Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+ * Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
  * 
  * For more information see: http://getgreenshot.org/
  * The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -72,9 +72,9 @@ namespace Greenshot.Forms {
 			// LanguageDialog
 			// 
 			this.AcceptButton = this.btnOK;
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13.5F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(390, 77);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.ClientSize = new System.Drawing.Size(390, 77);
 			this.ControlBox = true;
 			this.Controls.Add(this.btnOK);
 			this.Controls.Add(this.comboBoxLanguage);

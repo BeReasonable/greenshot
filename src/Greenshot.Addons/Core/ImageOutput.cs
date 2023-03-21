@@ -1,19 +1,19 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
-// 
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
+//
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 1 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -38,6 +38,7 @@ using Greenshot.Addons.Interfaces.Plugin;
 using Greenshot.Core.Enums;
 using Greenshot.Gfx;
 using Greenshot.Gfx.Quantizer;
+using Greenshot.Gfx.Structs;
 using Encoder = System.Drawing.Imaging.Encoder;
 
 namespace Greenshot.Addons.Core
@@ -96,7 +97,7 @@ namespace Greenshot.Addons.Core
 				// Set the text
 				var byteString = Encoding.ASCII.GetBytes(text + " ");
 				// Set Zero byte for String end.
-				byteString[byteString.Length - 1] = 0;
+				byteString[^1] = 0;
 				propertyItem.Value = byteString;
 				propertyItem.Len = text.Length + 1;
 			}
@@ -128,7 +129,7 @@ namespace Greenshot.Addons.Core
 						if (CoreConfiguration.OutputFilePromptQuality)
 						{
                             // TODO: Use factory
-							var qualityDialog = new QualityDialog(outputSettings, CoreConfiguration, GreenshotLanguage);
+							using var qualityDialog = new QualityDialog(outputSettings, CoreConfiguration, GreenshotLanguage);
 							qualityDialog.ShowDialog();
 						}
 						// TODO: For now we always overwrite, should be changed
@@ -309,25 +310,19 @@ namespace Greenshot.Addons.Core
 				}
 				var imageStream = new MemoryStream();
 				if (bitmap.Width == size && bitmap.Height == size)
-				{
-					using (var clonedImage = bitmap.CloneBitmap(PixelFormat.Format32bppArgb))
-					{
-						clonedImage.NativeBitmap.Save(imageStream, ImageFormat.Png);
-						imageSizes.Add(new Size(size, size));
-					}
-				}
+                {
+                    using var clonedImage = bitmap.CloneBitmap(PixelFormat.Format32bppArgb);
+                    clonedImage.NativeBitmap.Save(imageStream, ImageFormat.Png);
+                    imageSizes.Add(new Size(size, size));
+                }
 				else
-				{
-					// Resize to the specified size, first make sure the image is 32bpp
-					using (var clonedImage = bitmap.CloneBitmap(PixelFormat.Format32bppArgb))
-					{
-						using (var resizedImage = clonedImage.Resize(true, true, Color.Empty, size, size, null))
-						{
-							resizedImage.NativeBitmap.Save(imageStream, ImageFormat.Png);
-							imageSizes.Add(resizedImage.Size);
-						}
-					}
-				}
+                {
+                    // Resize to the specified size, first make sure the image is 32bpp
+                    using var clonedImage = bitmap.CloneBitmap(PixelFormat.Format32bppArgb);
+                    using var resizedImage = clonedImage.Resize(true, true, Color.Empty, size, size, null);
+                    resizedImage.NativeBitmap.Save(imageStream, ImageFormat.Png);
+                    imageSizes.Add(resizedImage.Size);
+                }
 
 				imageStream.Seek(0, SeekOrigin.Begin);
 				encodedImages.Add(imageStream);
@@ -380,7 +375,7 @@ namespace Greenshot.Addons.Core
 
 	        // We create a copy of the bitmap, so everything else can be disposed
 	        surfaceFileStream.Position = 0;
-	        var fileImage = BitmapHelper.FromStream(surfaceFileStream, ".greenshot"); 
+	        var fileImage = BitmapHelper.FromStream(surfaceFileStream, ".greenshot");
 
 	        // Start at -14 read "GreenshotXX.YY" (XX=Major, YY=Minor)
 	        const int markerSize = 14;
@@ -395,13 +390,11 @@ namespace Greenshot.Addons.Core
 	            Log.Info().WriteLine("Greenshot file format: {0}", greenshotMarker);
 	            const int filesizeLocation = 8 + markerSize;
 	            surfaceFileStream.Seek(-filesizeLocation, SeekOrigin.End);
-	            using (var reader = new BinaryReader(surfaceFileStream))
-	            {
-	                var bytesWritten = reader.ReadInt64();
-	                surfaceFileStream.Seek(-(bytesWritten + filesizeLocation), SeekOrigin.End);
-	                returnSurface.LoadElementsFromStream(surfaceFileStream);
-	            }
-	        }
+                using var reader = new BinaryReader(surfaceFileStream);
+                var bytesWritten = reader.ReadInt64();
+                surfaceFileStream.Seek(-(bytesWritten + filesizeLocation), SeekOrigin.End);
+                returnSurface.LoadElementsFromStream(surfaceFileStream);
+            }
 	        if (fileImage == null)
 	        {
 	            return returnSurface;
@@ -566,20 +559,16 @@ namespace Greenshot.Addons.Core
 
 				// Output the surface elements, size and marker to the stream
 				if (outputSettings.Format == OutputFormats.greenshot)
-				{
-					using (var tmpStream = new MemoryStream())
-					{
-						var bytesWritten = surface.SaveElementsToStream(tmpStream);
-						using (var writer = new BinaryWriter(tmpStream))
-						{
-							writer.Write(bytesWritten);
-							var v = Assembly.GetExecutingAssembly().GetName().Version;
-							var marker = Encoding.ASCII.GetBytes($"Greenshot{v.Major:00}.{v.Minor:00}");
-							writer.Write(marker);
-							tmpStream.WriteTo(stream);
-						}
-					}
-				}
+                {
+                    using var tmpStream = new MemoryStream();
+                    var bytesWritten = surface.SaveElementsToStream(tmpStream);
+                    using var writer = new BinaryWriter(tmpStream);
+                    writer.Write(bytesWritten);
+                    var v = Assembly.GetExecutingAssembly().GetName().Version;
+                    var marker = Encoding.ASCII.GetBytes($"Greenshot{v.Major:00}.{v.Minor:00}");
+                    writer.Write(marker);
+                    tmpStream.WriteTo(stream);
+                }
 			}
 			finally
 			{
@@ -630,28 +619,26 @@ namespace Greenshot.Addons.Core
 					RedirectStandardError = true,
 					UseShellExecute = true
 				};
-				using (var process = Process.Start(processStartInfo))
-				{
-					if (process != null)
-					{
-						process.WaitForExit();
-						if (process.ExitCode == 0)
-						{
-							if (Log.IsDebugEnabled())
-							{
-								Log.Debug().WriteLine("File size after processing {0}", new FileInfo(tmpFileName).Length);
-								Log.Debug().WriteLine("Reading back tmp file: {0}", tmpFileName);
-							}
-							var processedImage = File.ReadAllBytes(tmpFileName);
-							targetStream.Write(processedImage, 0, processedImage.Length);
-							return true;
-						}
-						Log.Error().WriteLine("Error while processing PNG image: {0}", process.ExitCode);
-						Log.Error().WriteLine("Output: {0}", process.StandardOutput.ReadToEnd());
-						Log.Error().WriteLine("Error: {0}", process.StandardError.ReadToEnd());
-					}
-				}
-			}
+                using var process = Process.Start(processStartInfo);
+                if (process != null)
+                {
+                    process.WaitForExit();
+                    if (process.ExitCode == 0)
+                    {
+                        if (Log.IsDebugEnabled())
+                        {
+                            Log.Debug().WriteLine("File size after processing {0}", new FileInfo(tmpFileName).Length);
+                            Log.Debug().WriteLine("Reading back tmp file: {0}", tmpFileName);
+                        }
+                        var processedImage = File.ReadAllBytes(tmpFileName);
+                        targetStream.Write(processedImage, 0, processedImage.Length);
+                        return true;
+                    }
+                    Log.Error().WriteLine("Error while processing PNG image: {0}", process.ExitCode);
+                    Log.Error().WriteLine("Output: {0}", process.StandardOutput.ReadToEnd());
+                    Log.Error().WriteLine("Error: {0}", process.StandardError.ReadToEnd());
+                }
+            }
 			catch (Exception e)
 			{
 				Log.Error().WriteLine(e, "Error while processing PNG image: ");
@@ -714,40 +701,38 @@ namespace Greenshot.Addons.Core
 				}
 			}
 
-			// check for color reduction, forced or automatically, only when the DisableReduceColors is false 
+			// check for color reduction, forced or automatically, only when the DisableReduceColors is false
 			if (outputSettings.DisableReduceColors || !CoreConfiguration.OutputFileAutoReduceColors && !outputSettings.ReduceColors)
 			{
 				return disposeImage;
 			}
 			var isAlpha = Image.IsAlphaPixelFormat(bitmapToSave.PixelFormat);
 			if (outputSettings.ReduceColors || !isAlpha && CoreConfiguration.OutputFileAutoReduceColors)
-			{
-				using (var quantizer = new WuQuantizer(bitmapToSave))
-				{
-					var colorCount = quantizer.GetColorCount();
-					Log.Info().WriteLine("Image with format {0} has {1} colors", bitmapToSave.PixelFormat, colorCount);
-					if (!outputSettings.ReduceColors && colorCount >= 256)
-					{
-						return disposeImage;
-					}
-					try
-					{
-						Log.Info().WriteLine("Reducing colors on bitmap to 256.");
-						tmpBitmap = quantizer.GetQuantizedImage(CoreConfiguration.OutputFileReduceColorsTo);
-						if (disposeImage)
-						{
-							bitmapToSave.Dispose();
-						}
-						bitmapToSave = tmpBitmap;
-						// Make sure the "new" image is disposed
-						disposeImage = true;
-					}
-					catch (Exception e)
-					{
-						Log.Warn().WriteLine(e, "Error occurred while Quantizing the image, ignoring and using original. Error: ");
-					}
-				}
-			}
+            {
+                using var quantizer = new WuQuantizer<Bgra32>(bitmapToSave);
+                var colorCount = quantizer.GetColorCount();
+                Log.Info().WriteLine("Image with format {0} has {1} colors", bitmapToSave.PixelFormat, colorCount);
+                if (!outputSettings.ReduceColors && colorCount >= 256)
+                {
+                    return disposeImage;
+                }
+                try
+                {
+                    Log.Info().WriteLine("Reducing colors on bitmap to 256.");
+                    tmpBitmap = quantizer.GetQuantizedImage(CoreConfiguration.OutputFileReduceColorsTo);
+                    if (disposeImage)
+                    {
+                        bitmapToSave.Dispose();
+                    }
+                    bitmapToSave = tmpBitmap;
+                    // Make sure the "new" image is disposed
+                    disposeImage = true;
+                }
+                catch (Exception e)
+                {
+                    Log.Warn().WriteLine(e, "Error occurred while Quantizing the image, ignoring and using original. Error: ");
+                }
+            }
 			else if (isAlpha && !outputSettings.ReduceColors)
 			{
 				Log.Info().WriteLine("Skipping 'optional' color reduction as the image has alpha");
@@ -837,14 +822,12 @@ namespace Greenshot.Addons.Core
 
             // TODO: This should not be done here, remove this!!
 			if (copyPathToClipboard)
-			{
-			    using (var clipboardAccessToken = ClipboardNative.Access())
-			    {
-                    clipboardAccessToken.ClearContents();
-                    // TODO: File??
-			        clipboardAccessToken.SetAsUnicodeString(fullPath);
-			    }
-			}
+            {
+                using var clipboardAccessToken = ClipboardNative.Access();
+                clipboardAccessToken.ClearContents();
+                // TODO: File??
+                clipboardAccessToken.SetAsUnicodeString(fullPath);
+            }
 		}
 
 		/// <summary>

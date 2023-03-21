@@ -1,5 +1,5 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2018 Thomas Braun, Jens Klingen, Robin Krom
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
 // 
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -60,7 +60,7 @@ namespace Greenshot.Addon.Jira
 	    public void Startup()
 	    {
             // Subscribe the windows events which tell us a title was changed
-	        _winEventObservable = WinEventHook.WindowTileChangeObservable()
+	        _winEventObservable = WinEventHook.WindowTitleChangeObservable()
 	            .Select(info => User32Api.GetText(info.Handle))
 	            .Where(title => !string.IsNullOrEmpty(title))
 	            .Subscribe(MonitorTitleChangeEvent);

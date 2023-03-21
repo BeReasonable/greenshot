@@ -1,6 +1,6 @@
 ﻿/*
  * Greenshot - a free and open source screenshot tool
- * Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+ * Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
  * 
  * For more information see: http://getgreenshot.org/
  * The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
@@ -19,7 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System.Reflection;
 using Greenshot.Addons.Controls;
 
 namespace Greenshot.Forms {
@@ -28,19 +27,6 @@ namespace Greenshot.Forms {
 		/// Designer variable used to keep track of non-visual components.
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
-		
-		/// <summary>
-		/// Disposes resources used by the form.
-		/// </summary>
-		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-		protected override void Dispose(bool disposing) {
-			if (disposing) {
-				if (components != null) {
-					components.Dispose();
-				}
-			}
-			base.Dispose(disposing);
-		}
 		
 		/// <summary>
 		/// This method is required for Windows Forms designer support.
@@ -191,12 +177,12 @@ namespace Greenshot.Forms {
 			this.lblTranslation.Name = "lblTranslation";
 			this.lblTranslation.Size = new System.Drawing.Size(466, 23);
 			this.lblTranslation.TabIndex = 15;
-			// 
-			// AboutForm
-			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13.5F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(530, 293);
+            // 
+            // AboutForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.ClientSize = new System.Drawing.Size(530, 293);
 			this.Controls.Add(this.lblTranslation);
 			this.Controls.Add(this.pictureBox1);
 			this.Controls.Add(this.linkLabel1);

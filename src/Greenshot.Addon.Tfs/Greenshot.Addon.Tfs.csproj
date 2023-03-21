@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <RootNamespace>Greenshot.Addon.Tfs</RootNamespace>
     <AssemblyName>Greenshot.Addon.Tfs</AssemblyName>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +22,6 @@
   </ItemGroup>
   
   <ItemGroup>
-	<PackageReference Include="MahApps.Metro" Version="2.0.0-alpha0455" />
+	<PackageReference Include="MahApps.Metro" Version="2.4.3" />
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
 		<resource name="about_host">Greenshot is hosted by GitHub at</resource>
 		<resource name="about_icons">Icons from Yusuke Kamiyamane's Fugue icon set (Creative Commons Attribution 3.0 license)</resource>
 		<resource name="about_license">
-			Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
+			Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
 			Greenshot comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions.
 			Details about the GNU General Public License:
 		</resource>
@@ -90,7 +90,7 @@
 		<resource name="expertsettings_optimizeforrdp">Make some optimizations for usage with remote desktop</resource>
 		<resource name="expertsettings_reuseeditorifpossible">Reuse editor if possible</resource>
 		<resource name="expertsettings_suppresssavedialogatclose">Suppress the save dialog when closing the editor</resource>
-		<resource name="expertsettings_thumbnailpreview">Show window thumbnails in context menu (for Vista and windows 7)</resource>
+		<resource name="expertsettings_thumbnailpreview">Show window thumbnails in context menu (for Vista and Windows 7)</resource>
 		<resource name="exported_to">Exported to: {0}</resource>
 		<resource name="exported_to_error">An error occured while exporting to {0}:</resource>
 		<resource name="help_title">Greenshot Help</resource>

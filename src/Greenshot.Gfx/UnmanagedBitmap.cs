@@ -1,19 +1,19 @@
 ﻿// Greenshot - a free and open source screenshot tool
-// Copyright (C) 2007-2019 Thomas Braun, Jens Klingen, Robin Krom
-// 
+// Copyright (C) 2007-2020 Thomas Braun, Jens Klingen, Robin Krom
+//
 // For more information see: http://getgreenshot.org/
 // The Greenshot project is hosted on GitHub https://github.com/greenshot/greenshot
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 1 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -75,7 +75,6 @@ namespace Greenshot.Gfx
             GC.AddMemoryPressure(bytesAllocated);
         }
 
-
         /// <summary>
         /// The constructor for the UnmanagedBitmap with already initialized bits
         /// </summary>
@@ -133,27 +132,18 @@ namespace Greenshot.Gfx
         {
             get
             {
-                PixelFormat format;
                 TPixelLayout empty = default;
-                switch (empty)
+                return empty switch
                 {
-                    case Bgr24 _:
-                        format = PixelFormat.Format24bppRgb;
-                        break;
-                    case Bgra32 _:
-                        format = PixelFormat.Format32bppArgb;
-                        break;
-                    case Bgr32 _:
-                        format = PixelFormat.Format32bppRgb;
-                        break;
-                    default:
-                        throw new NotSupportedException("Unknown pixel format");
-                }
-
-                return format;
+                    Bgr24 _ => PixelFormat.Format24bppRgb,
+                    Bgra32 _ => PixelFormat.Format32bppArgb,
+                    Bgr32 _ => PixelFormat.Format32bppRgb,
+                    byte _ => PixelFormat.Format8bppIndexed,
+                    _ => throw new NotSupportedException("Unknown pixel format")
+                };
             }
         }
-        
+
         /// <summary>
         /// Returns the pixel format for this Unmanaged bitmap
         /// </summary>
@@ -162,17 +152,14 @@ namespace Greenshot.Gfx
             get
             {
                 TPixelLayout empty = default;
-                switch (empty)
+                return empty switch
                 {
-                    case Bgr24 _:
-                        return PixelFormats.Bgr24;
-                    case Bgra32 _:
-                        return PixelFormats.Bgra32;
-                    case Bgr32 _:
-                        return PixelFormats.Bgr32;
-                    default:
-                        throw new NotSupportedException("Unknown pixel format");
-                }
+                    Bgr24 _ => PixelFormats.Bgr24,
+                    Bgra32 _ => PixelFormats.Bgra32,
+                    Bgr32 _ => PixelFormats.Bgr32,
+                    byte _ => PixelFormats.Indexed8,
+                    _ => throw new NotSupportedException("Unknown pixel format")
+                };
             }
         }
 
@@ -186,7 +173,7 @@ namespace Greenshot.Gfx
         /// Convert this to a real bitmap
         /// </summary>
         /// <returns>Bitmap</returns>
-        public Bitmap NativeBitmap
+        public virtual Bitmap NativeBitmap
         {
             get
             {
@@ -197,7 +184,7 @@ namespace Greenshot.Gfx
                 return _nativeBitmap;
             }
         }
-        
+
         /// <summary>
         /// Convert this to a real bitmap
         /// </summary>
@@ -228,4 +215,5 @@ namespace Greenshot.Gfx
             GC.RemoveMemoryPressure(Height * _stride);
         }
     }
+
 }
